@@ -67,6 +67,7 @@ def main() -> None:
         'limits': 'Not installed or activated; no platform capability promotion'}
     (bundle / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
     archive: Path = build / ('backend-' + target + '.tar.gz')
+    stream: tarfile.TarFile
     with tarfile.open(archive, 'w:gz') as stream:
         stream.add(bundle, arcname='backend')
     digest: str = hashlib.sha256(archive.read_bytes()).hexdigest()
