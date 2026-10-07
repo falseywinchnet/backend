@@ -41,16 +41,17 @@ def main() -> None:
     os.environ['GOMAXPROCS'] = str(args.jobs)
     run(['go', 'test', '-p', str(args.jobs), './...'], engine)
     run(['go', 'vet', './...'], engine)
-    run(['cargo', 'fmt', '--check'], orchestrator)
-    run(['cargo', 'test', '--locked', '--jobs', str(args.jobs)], orchestrator)
-    run(['cargo', 'clippy', '--locked', '--all-targets', '--all-features',
+    run(['cargo', '+stable', 'fmt', '--check'], orchestrator)
+    run(['cargo', '+stable', 'run', '--locked', '--bin', 'orchestrator-fixtures', '--', '--check'], orchestrator)
+    run(['cargo', '+stable', 'test', '--locked', '--jobs', str(args.jobs)], orchestrator)
+    run(['cargo', '+stable', 'clippy', '--locked', '--all-targets', '--all-features',
          '--jobs', str(args.jobs), '--', '-D', 'warnings'], orchestrator)
     suffix: str = ''
     if host == 'windows':
         suffix = '.exe'
     run(['go', 'build', '-trimpath', '-o', str(bundle / ('fileman-engine' + suffix)),
          './cmd/fileman-engine'], engine)
-    run(['cargo', 'build', '--locked', '--release', '--bin', 'orchestrator',
+    run(['cargo', '+stable', 'build', '--locked', '--release', '--bin', 'orchestrator',
          '--jobs', str(args.jobs)], orchestrator)
     shutil.copy2(orchestrator / 'target/release' / ('orchestrator' + suffix), bundle)
     shutil.copy2(ROOT / 'LICENSE', bundle)
