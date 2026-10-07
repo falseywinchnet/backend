@@ -332,9 +332,18 @@ where
     // SAFETY: the erased pointer names the live `F` borrowed by `for_each`.
     let function = unsafe { &*function.cast::<F>() };
     if catch_unwind(AssertUnwindSafe(|| function(task))).is_err() {
-        let _ = panics.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |value| {
-            Some(value.saturating_add(1))
-        });
+        record_panic(panics);
+    }
+}
+
+fn record_panic(counter: &AtomicU32) {
+    let mut observed: u32 = counter.load(Ordering::Relaxed);
+    loop {
+        let next: u32 = observed.saturating_add(1);
+        match counter.compare_exchange_weak(observed, next, Ordering::Relaxed, Ordering::Relaxed) {
+            Ok(_) => break,
+            Err(current) => observed = current,
+        }
     }
 }
 

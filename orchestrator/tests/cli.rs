@@ -49,7 +49,7 @@ fn local_transport_is_explicitly_unavailable_without_publishing_an_endpoint() {
         let output: std::process::Output = command.output().expect("run unavailable transport");
         assert!(!output.status.success());
         assert!(String::from_utf8_lossy(&output.stderr).contains("not implemented"));
-        assert!(output.stdout.is_empty());
+        assert_eq!(output.stdout, Vec::<u8>::new());
         assert!(!runtime.exists());
     }
 }

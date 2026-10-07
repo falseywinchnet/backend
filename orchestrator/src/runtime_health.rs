@@ -69,11 +69,7 @@ impl RuntimeHealth {
     }
 
     pub fn record_session_closed(&self) {
-        let _ = self
-            .active_sessions
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |value| {
-                Some(value.saturating_sub(1))
-            });
+        saturating_change(&self.active_sessions, false);
     }
 
     pub fn record_authenticated_session(&self) {
@@ -119,14 +115,39 @@ impl RuntimeHealth {
 }
 
 fn saturating_increment(counter: &AtomicU64) {
-    let _ = counter.fetch_update(Ordering::Relaxed, Ordering::Relaxed, |value| {
-        Some(value.saturating_add(1))
-    });
+    saturating_change(counter, true);
+}
+
+// Keep the Rust 1.87 API baseline while avoiding deprecated fetch_update.
+fn saturating_change(counter: &AtomicU64, increment: bool) {
+    let mut observed: u64 = counter.load(Ordering::Relaxed);
+    loop {
+        let next: u64 = if increment {
+            observed.saturating_add(1)
+        } else {
+            observed.saturating_sub(1)
+        };
+        match counter.compare_exchange_weak(observed, next, Ordering::Relaxed, Ordering::Relaxed) {
+            Ok(_) => break,
+            Err(current) => observed = current,
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::RuntimeHealth;
+    use super::{RuntimeHealth, saturating_change};
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    #[test]
+    fn atomic_health_counters_saturate_at_both_limits() {
+        let counter: AtomicU64 = AtomicU64::new(u64::MAX);
+        saturating_change(&counter, true);
+        assert_eq!(counter.load(Ordering::Relaxed), u64::MAX);
+        counter.store(0, Ordering::Relaxed);
+        saturating_change(&counter, false);
+        assert_eq!(counter.load(Ordering::Relaxed), 0);
+    }
 
     #[test]
     fn counters_never_underflow_and_snapshot_is_explicitly_non_authoritative() {

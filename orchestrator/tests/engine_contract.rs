@@ -37,18 +37,18 @@ fn cached_stale_and_no_match_are_distinct_from_provider_absence() {
     let stale: EngineQueryResultFixture = read_fixture("query_cached_stale.json");
     assert!(stale.is_well_formed());
     assert_eq!(stale.terminal, TerminalStatus::Partial);
-    assert!(!stale.results.is_empty());
+    assert_ne!(stale.results, Vec::<serde_json::Value>::new());
     assert_eq!(stale.stale_roots, ["docs"]);
 
     let no_match: EngineQueryResultFixture = read_fixture("query_no_match.json");
     assert!(no_match.is_well_formed());
     assert_eq!(no_match.terminal, TerminalStatus::Success);
-    assert!(no_match.results.is_empty());
+    assert_eq!(no_match.results, Vec::<serde_json::Value>::new());
 
     let unavailable: EngineQueryResultFixture = read_fixture("query_provider_unavailable.json");
     assert!(unavailable.is_well_formed());
     assert_eq!(unavailable.terminal, TerminalStatus::Unavailable);
-    assert!(unavailable.results.is_empty());
+    assert_eq!(unavailable.results, Vec::<serde_json::Value>::new());
     assert!(unavailable.error.is_some());
 }
 
