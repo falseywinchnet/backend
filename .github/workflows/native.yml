@@ -29,6 +29,9 @@ jobs:
     env:
       CC: clang
       CXX: clang++
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -72,7 +75,6 @@ jobs:
           key: backend-rust-v1-${{ matrix.platform }}-${{ hashFiles('orchestrator/Cargo.lock') }}-${{ github.sha }}
           restore-keys: backend-rust-v1-${{ matrix.platform }}-${{ hashFiles('orchestrator/Cargo.lock') }}-
       - name: Test and package matching services
-        shell: ${{ matrix.shell }}
         run: python tools/build_bundle.py --jobs 4
       - uses: actions/upload-artifact@v4
         with:
