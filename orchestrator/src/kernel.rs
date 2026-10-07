@@ -1435,7 +1435,7 @@ mod tests {
             "orchestrator.status",
         ));
         assert_eq!(oversized_id.status, TerminalStatus::Invalid);
-        assert!(oversized_id.id.is_empty());
+        assert_eq!(oversized_id.id, "");
 
         let invalid_method = kernel.handle(Request::local("method", "orchestrator.status\nlog"));
         assert_eq!(invalid_method.status, TerminalStatus::Invalid);

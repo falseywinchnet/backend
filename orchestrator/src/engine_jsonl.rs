@@ -1062,7 +1062,7 @@ mod tests {
             adapter.query_catalogue(&search_request()).terminal,
             TerminalStatus::Unsupported
         );
-        assert!(adapter.peer_mut().method.is_empty());
+        assert_eq!(adapter.peer_mut().method, "");
         let mut request: EngineSearchRequest = search_request();
         request.filters.insert("kind".to_owned(), "file".to_owned());
         let mut broker: EngineSearchBroker<EngineJsonlSearchAdapter<RecordingCaller>> =
@@ -1071,7 +1071,7 @@ mod tests {
             broker.search(&request, EngineSearchPolicy::PreferCatalogue);
         assert!(matches!(outcome, EngineSearchOutcome::Catalogue(_)));
         assert_eq!(outcome.terminal(), TerminalStatus::Unsupported);
-        assert!(broker.into_provider().into_peer().method.is_empty());
+        assert_eq!(broker.into_provider().into_peer().method, "");
     }
 
     #[test]
@@ -1085,7 +1085,7 @@ mod tests {
         let outcome: EngineSearchOutcome =
             broker.search(&search_request(), EngineSearchPolicy::CatalogueOnly);
         assert_eq!(outcome.terminal(), TerminalStatus::Unsupported);
-        assert!(broker.provider_mut().peer_mut().method.is_empty());
+        assert_eq!(broker.provider_mut().peer_mut().method, "");
         let outcome: EngineSearchOutcome =
             broker.search(&search_request(), EngineSearchPolicy::PreferCatalogue);
         assert!(matches!(outcome, EngineSearchOutcome::Live(_)));

@@ -588,7 +588,7 @@ mod tests {
                 .expect("valid options")
                 .is_some()
         );
-        assert!(complete.is_empty());
+        assert_eq!(complete, Vec::<String>::new());
     }
 
     #[test]

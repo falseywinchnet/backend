@@ -869,9 +869,11 @@ fn remove_if_present(path: &Path) -> Result<(), LocalEndpointError> {
 
 #[cfg(test)]
 mod tests {
+    #[cfg(target_os = "macos")]
+    use super::supervisor_socket_path_matches;
     use super::{
         LocalEndpointError, UnixEndpoint, connect_authenticated, default_runtime_directory,
-        discover, remove_if_present, supervisor_socket_path_matches,
+        discover, remove_if_present,
     };
     use crate::local_session::ClientHello;
     use crate::local_wire::write_json_frame;

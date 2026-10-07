@@ -4,10 +4,12 @@ mod support;
 
 use fileman_orchestrator::common::{ContractRef, Request, Response, TerminalStatus};
 use fileman_orchestrator::local_endpoint::connect_authenticated;
+use fileman_orchestrator::local_session::ServerHello;
 use fileman_orchestrator::local_wire::{read_json_frame, write_json_frame};
 use serde_json::json;
 use std::fs;
 use std::io::Read;
+use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
 use std::process::{Child, Command, Stdio};
 use std::thread;
@@ -164,9 +166,15 @@ fn daemon_routes_zero_catalogue_search_to_live_engine() {
     assert!(cpp_output.contains("results=1"), "{cpp_output}");
     assert!(cpp_output.contains("first=needle.txt"), "{cpp_output}");
 
-    let shutdown = Request::local("stop", "orchestrator.shutdown");
-    write_json_frame(&mut stream, &shutdown).expect("write shutdown");
-    let stopped: Response = read_json_frame(&mut stream).expect("read shutdown");
+    // Client compilation can exceed the daemon's idle-session timeout.
+    // Shutdown is a new authenticated operation, independent of that idle lease.
+    drop(stream);
+    let (mut shutdown_stream, _): (UnixStream, ServerHello) =
+        connect_authenticated(&runtime, "rust-live-shutdown")
+            .expect("connect authenticated shutdown session");
+    let shutdown: Request = Request::local("stop", "orchestrator.shutdown");
+    write_json_frame(&mut shutdown_stream, &shutdown).expect("write shutdown");
+    let stopped: Response = read_json_frame(&mut shutdown_stream).expect("read shutdown");
     assert_eq!(stopped.status, TerminalStatus::Success);
     assert!(daemon.wait().expect("wait for daemon").success());
 }
